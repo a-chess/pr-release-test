@@ -1,19 +1,28 @@
-name: git-issue-release
+name: release-pr
 
 on:
-  pull_request: # PRがマージされた時にIssueを更新するために使います。
-    types: [closed]
-  release: # ReleaseがPublishされた時にIssueをクローズするために使います。
-    types: [published]
+  create:
+    branch:
+      - release
 
 jobs:
-  action:
-    runs-on: ubuntu-latest
+  job:
+    runs-on: ubuntu-18.04
     steps:
-      - name: git-issue-release
-        uses: kouki-dan/git-issue-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v2
         with:
-          release-tag-pattern: ^v
-          release-label: "release"
+          fetch-depth: 0 # Need to fetch merge history
+
+      - name: Set up Ruby
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: 2.7.x
+
+      - name: Create a release pull request
+        env:
+          GIT_PR_RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_PR_RELEASE_BRANCH_PRODUCTION: master
+          GIT_PR_RELEASE_BRANCH_STAGING: release
+        run: |
+          gem install -N git-pr-release
+          git-pr-release
